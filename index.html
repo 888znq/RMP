@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Two Columns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  html, body, #app, #app * { font-family: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace !important; }
+</style>
+<style>
+  :root {
+    --bg: #000432;
+    --line: rgba(255,255,255,0.3);
+    --green: #4ade80;
+    --red: #ff5a5a;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; padding: 0; background: var(--bg); }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--bg);
+    z-index: 10;
+  }
+  #app { width: 100%; height: 100%; background: var(--bg); color: #fff; display: flex; flex-direction: column; overflow: hidden; border: 0; }
+  #app input { background: transparent; color: #fff; border: 1px solid var(--line); border-radius: 0; padding: 0 10px; font: inherit; width: 100%; height: 40px; }
+  #app input:focus { outline: 2px solid #fff; outline-offset: -2px; }
+  #app button { background: transparent; color: #fff; border: 1px solid #fff; border-radius: 6px; padding: 8px 12px; font: inherit; cursor: pointer; white-space: nowrap; }
+  #app button:hover { background: #fff; color: #000432; }
+  #app button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+  #cols { flex: 1; min-height: 0; display: flex; flex-direction: row; }
+  .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
+  .col + .col { border-left: 1px solid var(--line); }
+  .col-head { position: sticky; top: 0; z-index: 5; background: var(--bg); }
+  .col-head input { font-weight: 700; font-size: 1.05rem; padding: 0 10px; }
+  .list { display: flex; flex-direction: column; }
+
+  .row { display: flex; flex-direction: row; align-items: stretch; margin-top: -1px; }
+  .cell { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
+  .cell input { padding: 0 34px 0 10px; }
+
+  #app .s-col, #app .s-col:hover {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    padding: 0;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
+    font-size: 0;
+    line-height: 14px;
+    z-index: 2;
+  }
+  .s-col::after { content: ""; position: absolute; inset: -11px; }
+  .s-col::before { content: "✕"; display: block; text-align: center; font-size: 13px; font-weight: 700; line-height: 14px; }
+  .s-col[data-c="g"]::before { content: "✓"; }
+  #app .s-col[data-c="g"], #app .s-col[data-c="g"]:hover { color: var(--green) !important; }
+  #app .s-col[data-c="r"], #app .s-col[data-c="r"]:hover { color: var(--red) !important; }
+  #app input[data-c="g"] { color: var(--green); }
+  #app input[data-c="r"] { color: var(--red); }
+
+  #app .r-del { display: none; flex: none; width: 40px; height: 40px; padding: 0; margin-left: -1px; border-radius: 0; border-color: var(--line); font-size: 0; position: relative; }
+  #app.del-mode .r-del { display: inline-block; }
+  #app .r-del::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6'/%3E%3C/svg%3E");
+  }
+  #app .r-del:hover { background: var(--red); border-color: var(--red); color: #fff; }
+  #app #del-mode[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
+
+  .addbar { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.25); }
+  .addbar input { flex: 1; min-width: 0; border-radius: 6px !important; border-color: rgba(255,255,255,0.4) !important; }
+</style>
+</head>
+<body>
+  <main id="app">
+    <div id="cols">
+      <section class="col">
+        <div class="col-head"><input class="head-input" data-col="0" type="text" placeholder="Left column" aria-label="Left column title"></div>
+        <div class="list" id="list0"></div>
+      </section>
+      <section class="col">
+        <div class="col-head"><input class="head-input" data-col="1" type="text" placeholder="Right column" aria-label="Right column title"></div>
+        <div class="list" id="list1"></div>
+      </section>
+    </div>
+    <div class="addbar">
+      <input id="new-item" type="text" placeholder="New item" aria-label="New item">
+      <button id="add-0" type="button" title="Add to left column" aria-label="Add to left column">+ Left</button>
+      <button id="add-1" type="button" title="Add to right column" aria-label="Add to right column">+ Right</button>
+      <button id="del-mode" type="button" title="Show / hide delete buttons" aria-label="Show or hide delete buttons" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref as dbRef, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    var firebaseConfig = {
+      apiKey: "AIzaSyAYHA8Qw3Qw3Qzbyg8MtjrSKcJusNi4VaA6V4",
+      authDomain: "system-data-bf026.firebaseapp.com",
+      databaseURL: "https://system-data-bf026-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "system-data-bf026",
+      storageBucket: "system-data-bf026.firebasestorage.app",
+      messagingSenderId: "718302899022",
+      appId: "1:718302899022:web:f1675dbcc293e138c68c1f"
+    };
+
+    var fbApp = initializeApp(firebaseConfig);
+    var db = getDatabase(fbApp);
+    var ROOT = "twocol";
+    var ITEMS = ROOT + "/items";
+    var HEADS = ROOT + "/heads";
+
+    var appEl = document.getElementById("app");
+    var lists = [document.getElementById("list0"), document.getElementById("list1")];
+    var headInputs = document.querySelectorAll(".head-input");
+    var newEl = document.getElementById("new-item");
+    var els = {};
+    var itemsData = {};
+    var headsData = {};
+
+    function buildRow(id) {
+      var box = document.createElement("div");
+      box.className = "row";
+      box.innerHTML = '<div class="cell"><input class="r-title" type="text" aria-label="Item"><button type="button" class="s-col" data-c="r" title="Tick / cross" aria-label="Tick or cross"></button></div><button type="button" class="r-del" title="Delete" aria-label="Delete">Delete</button>';
+      var r = {
+        box: box,
+        title: box.querySelector(".r-title"),
+        dot: box.querySelector(".s-col"),
+        del: box.querySelector(".r-del")
+      };
+      var rowRef = dbRef(db, ITEMS + "/" + id);
+      r.title.addEventListener("change", function () {
+        var t = r.title.value.trim();
+        if (t) {
+          update(rowRef, { title: t }).catch(console.error);
+        } else {
+          r.title.value = (itemsData[id] && itemsData[id].title) || "";
+        }
+      });
+      r.dot.addEventListener("click", function () {
+        var cur = !!(itemsData[id] && itemsData[id].on);
+        update(rowRef, { on: !cur }).catch(console.error);
+      });
+      r.del.addEventListener("click", function () {
+        remove(rowRef).catch(console.error);
+      });
+      return r;
+    }
+
+    function render() {
+      var ids = Object.keys(itemsData).sort(function (a, b) {
+        return (itemsData[a].created || 0) - (itemsData[b].created || 0);
+      });
+      Object.keys(els).forEach(function (id) {
+        if (!itemsData[id]) {
+          els[id].box.remove();
+          delete els[id];
+        }
+      });
+      ids.forEach(function (id) {
+        var s = itemsData[id];
+        if (!els[id]) { els[id] = buildRow(id); }
+        var r = els[id];
+        var target = lists[s.col === 1 ? 1 : 0];
+        if (r.box.parentNode !== target) { target.appendChild(r.box); }
+        if (document.activeElement !== r.title) { r.title.value = s.title || ""; }
+        var c = s.on ? "g" : "r";
+        r.title.dataset.c = c;
+        r.dot.dataset.c = c;
+      });
+    }
+
+    function renderHeads() {
+      headInputs.forEach(function (inp) {
+        if (document.activeElement !== inp) { inp.value = headsData["c" + inp.dataset.col] || ""; }
+      });
+    }
+
+    headInputs.forEach(function (inp) {
+      inp.addEventListener("change", function () {
+        var patch = {};
+        patch["c" + inp.dataset.col] = inp.value.trim();
+        update(dbRef(db, HEADS), patch).catch(console.error);
+      });
+    });
+
+    function addItem(col) {
+      var title = newEl.value.trim();
+      if (!title) return;
+      newEl.value = "";
+      set(push(dbRef(db, ITEMS)), { title: title, col: col, on: false, created: Date.now() }).catch(function (err) {
+        console.error(err);
+        newEl.value = title;
+      });
+    }
+
+    document.getElementById("add-0").addEventListener("click", function () { addItem(0); });
+    document.getElementById("add-1").addEventListener("click", function () { addItem(1); });
+    newEl.addEventListener("keydown", function (e) { if (e.key === "Enter") addItem(0); });
+
+    document.getElementById("del-mode").addEventListener("click", function () {
+      var on = appEl.classList.toggle("del-mode");
+      this.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+
+    onValue(dbRef(db, ITEMS), function (snap) { itemsData = snap.val() || {}; render(); });
+    onValue(dbRef(db, HEADS), function (snap) { headsData = snap.val() || {}; renderHeads(); });
+  </script>
+</body>
+</html>
