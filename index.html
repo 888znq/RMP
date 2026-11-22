@@ -72,8 +72,9 @@
   #app input[data-c="g"] { color: var(--green); }
   #app input[data-c="r"] { color: var(--red); }
 
-  #app .r-del { display: none; flex: none; width: 40px; height: 40px; padding: 0; margin-left: -1px; border-radius: 0; border-color: var(--line); font-size: 0; position: relative; }
-  #app.del-mode .r-del { display: inline-block; }
+  #app .row { position: relative; }
+    #app .r-del { display: inline-block; position: absolute; top: 0; right: 36px; flex: none; width: 32px; height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 0; opacity: 0; pointer-events: none; z-index: 3; }
+    #app .row:hover .r-del, #app.del-mode .r-del { opacity: 1; pointer-events: auto; }
   #app .r-del::before {
     content: "";
     position: absolute;
@@ -198,8 +199,31 @@
         update(rowRef, { on: !cur }).catch(console.error);
       });
       r.del.addEventListener("click", function () {
-        remove(rowRef).catch(console.error);
-      });
+              var q = id.split("_");
+              var c2 = +q[0];
+              var at = +q[1];
+              var patch = {};
+              var moved = {};
+              Object.keys(itemsData).forEach(function (k) {
+                var p = k.split("_");
+                if (+p[0] === c2 && +p[1] > at) { moved[k] = itemsData[k]; }
+              });
+              patch[id] = null;
+              delete itemsData[id];
+              Object.keys(moved).forEach(function (k) {
+                patch[k] = null;
+                delete itemsData[k];
+              });
+              Object.keys(moved).forEach(function (k) {
+                var p = k.split("_");
+                var nk = c2 + "_" + (+p[1] - 1);
+                patch[nk] = moved[k];
+                itemsData[nk] = moved[k];
+              });
+              update(dbRef(db, ITEMS), patch).catch(console.error);
+                            if (counts[c2] > 1) { counts[c2] -= 1; }
+                            render();
+            });
       return r;
     }
 
@@ -221,7 +245,13 @@
               var c = s.on ? "g" : "r";
               r.title.dataset.c = c;
               r.dot.dataset.c = c;
-            }
+                          }
+                          var j = counts[col];
+                          while (els[col + "_" + j]) {
+                            els[col + "_" + j].box.remove();
+                            delete els[col + "_" + j];
+                            j++;
+                          }
           }
         }
 
