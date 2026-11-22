@@ -40,7 +40,7 @@
   #cols { flex: 1; min-height: 0; display: flex; flex-direction: row; }
   .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
   .col + .col { border-left: 1px solid var(--line); }
-  .col-head { position: sticky; top: 0; z-index: 5; background: var(--bg); }
+  .col-head { display: none; }
   .col-head input { font-weight: 700; font-size: 1.05rem; padding: 0 10px; }
   .list { display: flex; flex-direction: column; }
 
@@ -92,7 +92,7 @@
   #app .r-del:hover { background: var(--red); border-color: var(--red); color: #fff; }
   #app #del-mode[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
 
-  .addbar { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.25); }
+  .addbar { display: none !important; }
   .addbar input { flex: 1; min-width: 0; border-radius: 6px !important; border-color: rgba(255,255,255,0.4) !important; }
 </style>
 </head>
@@ -133,7 +133,9 @@
     var fbApp = initializeApp(firebaseConfig);
     var db = getDatabase(fbApp);
     var ROOT = "twocol";
-    var ITEMS = ROOT + "/items";
+    var ITEMS = ROOT + "/cells";
+        var SLOTS = 10;
+            var counts = [SLOTS, SLOTS];
     var HEADS = ROOT + "/heads";
 
     var appEl = document.getElementById("app");
@@ -160,10 +162,20 @@
         if (t) {
           update(rowRef, { title: t }).catch(console.error);
         } else {
-          r.title.value = (itemsData[id] && itemsData[id].title) || "";
+          remove(rowRef).catch(console.error);
         }
       });
-      r.dot.addEventListener("click", function () {
+      r.title.addEventListener("keydown", function (e) {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              var q = id.split("_");
+              var c2 = +q[0];
+              var nxt = +q[1] + 1;
+              if (nxt >= counts[c2]) { counts[c2] = nxt + 1; render(); }
+              var nid = c2 + "_" + nxt;
+              if (els[nid]) { els[nid].title.focus(); }
+            });
+            r.dot.addEventListener("click", function () {
         var cur = !!(itemsData[id] && itemsData[id].on);
         update(rowRef, { on: !cur }).catch(console.error);
       });
@@ -174,27 +186,26 @@
     }
 
     function render() {
-      var ids = Object.keys(itemsData).sort(function (a, b) {
-        return (itemsData[a].created || 0) - (itemsData[b].created || 0);
-      });
-      Object.keys(els).forEach(function (id) {
-        if (!itemsData[id]) {
-          els[id].box.remove();
-          delete els[id];
+          for (var col = 0; col < 2; col++) {
+            for (var k in itemsData) {
+                      var p = k.split("_");
+                      if (+p[0] === col && +p[1] + 1 > counts[col]) { counts[col] = +p[1] + 1; }
+                    }
+                    for (var i = 0; i < counts[col]; i++) {
+              var id = col + "_" + i;
+              var s = itemsData[id] || {};
+              if (!els[id]) {
+                els[id] = buildRow(id);
+                lists[col].appendChild(els[id].box);
+              }
+              var r = els[id];
+              if (document.activeElement !== r.title) { r.title.value = s.title || ""; }
+              var c = s.on ? "g" : "r";
+              r.title.dataset.c = c;
+              r.dot.dataset.c = c;
+            }
+          }
         }
-      });
-      ids.forEach(function (id) {
-        var s = itemsData[id];
-        if (!els[id]) { els[id] = buildRow(id); }
-        var r = els[id];
-        var target = lists[s.col === 1 ? 1 : 0];
-        if (r.box.parentNode !== target) { target.appendChild(r.box); }
-        if (document.activeElement !== r.title) { r.title.value = s.title || ""; }
-        var c = s.on ? "g" : "r";
-        r.title.dataset.c = c;
-        r.dot.dataset.c = c;
-      });
-    }
 
     function renderHeads() {
       headInputs.forEach(function (inp) {
@@ -229,7 +240,8 @@
       this.setAttribute("aria-pressed", on ? "true" : "false");
     });
 
-    onValue(dbRef(db, ITEMS), function (snap) { itemsData = snap.val() || {}; render(); });
+    render();
+        onValue(dbRef(db, ITEMS), function (snap) { itemsData = snap.val() || {}; render(); });
     onValue(dbRef(db, HEADS), function (snap) { headsData = snap.val() || {}; renderHeads(); });
   </script>
 </body>
