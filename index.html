@@ -150,7 +150,7 @@
     function buildRow(id) {
       var box = document.createElement("div");
       box.className = "row";
-      box.innerHTML = '<div class="cell"><input class="r-title" type="text" aria-label="Item"><button type="button" class="s-col" data-c="r" title="Tick / cross" aria-label="Tick or cross"></button></div><button type="button" class="r-del" title="Delete" aria-label="Delete">Delete</button>';
+      box.innerHTML = '<div class="cell"><input class="r-title" type="text" enterkeyhint="go" aria-label="Item"><button type="button" class="s-col" data-c="r" title="Tick / cross" aria-label="Tick or cross"></button></div><button type="button" class="r-del" title="Delete" aria-label="Delete">Delete</button>';
       var r = {
         box: box,
         title: box.querySelector(".r-title"),
