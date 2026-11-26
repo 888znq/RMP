@@ -229,11 +229,13 @@
     }
 
     function render() {
-          for (var col = 0; col < 2; col++) {
-            for (var k in itemsData) {
-                      var p = k.split("_");
-                      if (+p[0] === col && +p[1] + 1 > counts[col]) { counts[col] = +p[1] + 1; }
-                    }
+              for (var col = 0; col < 2; col++) {
+                var maxOccupied = -1;
+                for (var k in itemsData) {
+                          var p = k.split("_");
+                          if (+p[0] === col && +p[1] > maxOccupied) { maxOccupied = +p[1]; }
+                        }
+                        counts[col] = Math.max(SLOTS, maxOccupied + 1);
                     for (var i = 0; i < counts[col]; i++) {
               var id = col + "_" + i;
               var s = itemsData[id] || {};
